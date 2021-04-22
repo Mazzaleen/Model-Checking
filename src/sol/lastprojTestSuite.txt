@@ -1,0 +1,488 @@
+package sol
+import tester.Tester
+
+
+class ModelCheckingTestSuite {
+
+  /**
+   * Tester that tests AddEdge method in the ALNode class
+   * @param t
+   */
+  def testAddEdgeALGNode (t: Tester): Unit = {
+    //Method inside ALG node class inside ALG
+
+    val pokemon = new AdjacencyListGraph[String]()
+    val nodeA = pokemon.createNode("fire type")
+    val nodeB = pokemon.createNode("water type")
+    val nodeC = pokemon.createNode("earth type")
+    val nodeX = pokemon.createNode("types")
+
+    val nodeA1 = pokemon.createNode("Charmander")
+
+    //add regularly
+    nodeA.addEdge(nodeA1)
+    t.checkExpect(nodeA.getNexts(), List(nodeA1))
+
+    //edges going both ways
+    nodeA1.addEdge(nodeA)
+    t.checkExpect(nodeA1.getNexts(), List(nodeA))
+
+
+    // multiple edges
+    nodeX.addEdge(nodeA)
+    nodeX.addEdge(nodeB)
+    nodeX.addEdge(nodeC)
+    t.checkExpect(nodeX.getNexts(), List(nodeA,nodeB,nodeC))
+
+    //add edge to itself
+    nodeB.addEdge(nodeB)
+    t.checkExpect(nodeB.getNexts(), List(nodeB))
+
+  }
+
+  /**
+   * Test method that tests getter methods (getContents, getNexts)
+   * in the ALNode class
+   * @param t
+   */
+  def testGetterMethodsALGNode (t: Tester): Unit = {
+    val pokemon = new AdjacencyListGraph[String]()
+    val nodeA = pokemon.createNode("fire type")
+    val nodeB = pokemon.createNode("water type")
+    val nodeC = pokemon.createNode("earth type")
+
+    val nodeA1= pokemon.createNode("Charmander")
+    val nodeB1 = pokemon.createNode("Squirtle")
+    val nodeA2 = pokemon.createNode("flareon")
+
+    nodeA.addEdge(nodeA1)
+    nodeB.addEdge(nodeB1)
+    nodeA.addEdge(nodeA2)
+
+    t.checkExpect(nodeB.getContents,"water type")
+    t.checkExpect(nodeA.getNexts,List(nodeA1,nodeA2))
+    t.checkExpect(nodeC.getNexts,List())
+  }
+
+
+  /**
+   * Test method that tests CreateNode in the AdjacencyListGraph
+   * @param t
+   */
+  def testCreateNodeALG(t : Tester ): Unit = {
+    val pokemon = new AdjacencyListGraph[String]()
+    val footballers = new AdjacencyListGraph[String]()
+
+    val nodeA = pokemon.createNode("fire type")
+    val nodeB = pokemon.createNode("water type")
+    val nodeC = pokemon.createNode("earth type")
+    val nodeD = pokemon.createNode("dragon type")
+    val nodeZ = footballers.createNode("forwards")
+
+    t.checkExpect(pokemon.getGraph().size,4)
+    t.checkExpect(pokemon.getGraph(), List(nodeA,nodeB,nodeC,nodeD))
+    t.checkExpect(pokemon.getGraph().contains(nodeZ),false)
+
+    t.checkExpect(footballers.getGraph(), List(nodeZ))
+    t.checkExpect(footballers.getGraph().contains(nodeD),false)
+
+  }
+
+  /**
+   * Test method that tests addEdge in the AdjacencyListGraph
+   * @param t
+   */
+  def testAddEdgeALG(t : Tester ): Unit = {
+    //Method inside ALG
+    val pokemon = new AdjacencyListGraph[String]()
+    val nodeA = pokemon.createNode("fire type")
+    val nodeB = pokemon.createNode("water type")
+    val nodeC = pokemon.createNode("earth type")
+    val nodeX = pokemon.createNode("any type")
+
+    val nodeA1 = pokemon.createNode("Charmander")
+
+    //add regularly
+    pokemon.addEdge(nodeA,nodeA1)
+    t.checkExpect(nodeA.getNexts(), List(nodeA1))
+
+    //edges going both ways
+    pokemon.addEdge(nodeA1,nodeA)
+    t.checkExpect(nodeA1.getNexts(), List(nodeA))
+
+    // multiple edges
+    pokemon.addEdge(nodeX,nodeA)
+    pokemon.addEdge(nodeX,nodeB)
+    pokemon.addEdge(nodeX,nodeC)
+    t.checkExpect(nodeX.getNexts(), List(nodeA,nodeB,nodeC))
+
+    //add edge to itself
+    pokemon.addEdge(nodeB,nodeB)
+    t.checkExpect(nodeB.getNexts(), List(nodeB))
+
+  }
+
+    /**
+     * Test method that tests the checkAlways method in the stateMachine class
+     * @param t
+     */
+  def testCheckAlways(t : Tester ): Unit = {
+    //index 0
+    val graph0 = new AdjacencyListGraph[StateData]()
+    val stateMachine0 = new StateMachine(graph0)
+    stateMachine0.initFromCSV("data/street-light-nodes.csv",
+         "data/street-light-edges.csv","0")
+
+    t.checkExpect(stateMachine0.checkAlways(stateNode => true),None)
+    t.checkExpect(
+      stateMachine0.checkAlways(state => state.hasLabel("bigAveRed") ||
+        state.hasLabel("smallStRed")), None)
+
+    val street0A = stateMachine0.
+      checkAlways(state => state.hasLabel("bigAveGreen")
+        && state.hasLabel("smallStGreen"))
+    t.checkExpect( street0A.get.getContents().labels,
+      List("bigAveRed", "smallStGreen"))
+
+    val  street0B = stateMachine0.
+      checkAlways(state => state.hasLabel("bigAveGreen")
+        || state.hasLabel("smallStGreen"))
+    t.checkExpect(street0B.get.getContents().labels,
+      List("bigAveRed", "smallStYellow"))
+
+    //index 5
+    val graph5 = new AdjacencyListGraph[StateData]()
+    val stateMachine5 = new StateMachine(graph5)
+    stateMachine5.initFromCSV("data/street-light-nodes.csv",
+      "data/street-light-edges.csv","5")
+
+    val street5A =
+      stateMachine5.checkAlways(state => state.hasLabel("bigAveGreen")
+        && state.hasLabel("smallStGreen"))
+    t.checkExpect(street5A.get.getContents().labels,
+      List("bigAveYellow", "smallStYellow"))
+
+    val street5B =
+      stateMachine5.checkAlways(state => state.hasLabel("bigAveGreen")
+        && state.hasLabel("smallStYellow"))
+    t.checkExpect(street5B.get.getContents().labels,
+      List("bigAveYellow", "smallStYellow"))
+
+    val street5C =
+      stateMachine5.checkAlways(state => state.hasLabel("bigAveGreen") ||
+        state.hasLabel("smallStGreen"))
+    t.checkExpect(street5C.get.getContents().labels,
+      List("bigAveYellow", "smallStYellow"))
+
+
+
+
+    //custom graph manually created that's a cycle
+    val cycleGraph = new AdjacencyListGraph[StateData]()
+    val rock = cycleGraph.createNode(new StateData(List("rock","1")))
+    val paper = cycleGraph.createNode(new StateData(List("paper","1")))
+    val scissors = cycleGraph.createNode(new StateData(List("scissors","1")))
+    cycleGraph.addEdge(rock,scissors)
+    cycleGraph.addEdge(scissors,paper)
+    cycleGraph.addEdge(paper,rock)
+    val cycleStateMachine = new StateMachine(cycleGraph)
+    cycleStateMachine.setStart(rock)
+
+    t.checkExpect(
+        cycleStateMachine.checkAlways(state => state.hasLabel("1")),None)
+
+
+    //football one based on csv file,index 0
+    val footballGraph = new AdjacencyListGraph[StateData]
+    val footballMachine = new StateMachine(footballGraph)
+    footballMachine.initFromCSV("data/football-nodes.csv",
+          "data/football-edges.csv","0")
+    t.checkExpect(footballMachine.checkAlways(stateNode => true),None)
+
+    t.checkExpect(
+      footballMachine.checkAlways(state => state.hasLabel("goalkeeper") ||
+        state.hasLabel("striker")).get.getContents().labels,
+      List("1","defender","tackles"))
+
+    t.checkExpect(
+      footballMachine.checkAlways(state => state.hasLabel("midfielder") &&
+        state.hasLabel("defender")).get.getContents().labels,
+      List("0","goalkeeper","saves"))
+
+    //football one based on csv file,index 1
+    val footballGraph1 = new AdjacencyListGraph[StateData]
+    val footballMachine1 = new StateMachine(footballGraph)
+    footballMachine1.initFromCSV("data/football-nodes.csv",
+      "data/football-edges.csv","1")
+    t.checkExpect(footballMachine1.checkAlways(stateNode => true),None)
+
+    t.checkExpect(
+      footballMachine1.checkAlways(state => state.hasLabel("goalkeeper") ||
+        state.hasLabel("striker")).get.getContents().labels,
+      List("1","defender","tackles"))
+
+    t.checkExpect(
+      footballMachine1.checkAlways(state => state.hasLabel("striker") &&
+        state.hasLabel("defender")).get.getContents().labels,
+      List("1","defender","tackles"))
+
+    //football one based on csv file,index 2
+    val footballGraph2 = new AdjacencyListGraph[StateData]
+    val footballMachine2 = new StateMachine(footballGraph2)
+    footballMachine2.initFromCSV("data/football-nodes.csv",
+      "data/football-edges.csv","2")
+    t.checkExpect(footballMachine2.checkAlways(stateNode => true),None)
+
+    t.checkExpect(
+      footballMachine2.checkAlways(state => state.hasLabel("goalkeeper") ||
+        state.hasLabel("striker")).get.getContents().labels,
+      List("2","midfielder","passes"))
+
+    t.checkExpect(
+      footballMachine2.checkAlways(state => state.hasLabel("midfielder") &&
+        state.hasLabel("striker")).get.getContents().labels,
+      List("2","midfielder","passes"))
+
+    //rock paper scissors one based on csv file, index 0
+    val graphRPC = new AdjacencyListGraph[StateData]
+    val machineRPC = new StateMachine(graphRPC)
+    machineRPC.initFromCSV("data/rock-paper-scissors-nodes.csv",
+      "data/rock-paper-scissors-edges.csv","0")
+    t.checkExpect(machineRPC.checkAlways(stateNode => true),None)
+
+    //rock paper scissors one based on csv file, index 1
+    val graphRPC1 = new AdjacencyListGraph[StateData]
+    val machineRPC1 = new StateMachine(graphRPC1)
+    machineRPC1.initFromCSV("data/rock-paper-scissors-nodes.csv",
+      "data/rock-paper-scissors-edges.csv","1")
+    t.checkExpect(machineRPC1.checkAlways(stateNode => true),None)
+    t.checkExpect(
+          machineRPC1.checkAlways(state => state.hasLabel("scissors") ||
+            state.hasLabel("paper")).get.getContents().labels,
+      List("0", "rock", "clenchedFist"))
+
+    //rock paper scissors one based on csv file, index 2
+    val graphRPC2 = new AdjacencyListGraph[StateData]
+    val machineRPC2 = new StateMachine(graphRPC2)
+    machineRPC2.initFromCSV("data/rock-paper-scissors-nodes.csv",
+      "data/rock-paper-scissors-edges.csv","2")
+    t.checkExpect(machineRPC2.checkAlways(stateNode => true),None)
+    t.checkExpect(
+      machineRPC2.checkAlways(state => state.hasLabel("scissors") ||
+        state.hasLabel("paper")).get.getContents().labels,
+      List("0", "rock", "clenchedFist"))
+    t.checkExpect(
+      machineRPC2.checkAlways(state => state.hasLabel("scissors") &&
+        state.hasLabel("paper")).get.getContents().labels,
+      List("2", "paper", "openHand"))
+
+
+
+    //singular based on csv file, only one index
+    val aloneGraph = new AdjacencyListGraph[StateData]
+    val aloneMachine = new StateMachine(aloneGraph)
+    aloneMachine.initFromCSV("data/singular-nodes.csv",
+      "data/singular-edges.csv","0")
+    t.checkExpect(aloneMachine.checkAlways(stateNode => true),None)
+
+
+
+  }
+
+  /**
+   * Test method that tests the checkNever method in the stateMachine class
+   * @param t
+   */
+  def testCheckNever(t : Tester ): Unit = {
+    val graph0 = new AdjacencyListGraph[StateData]
+    val stateMachine0 = new StateMachine(graph0)
+    stateMachine0.initFromCSV("data/street-light-nodes.csv",
+      "data/street-light-edges.csv", "0")
+
+    //checkNever
+    t.checkExpect(stateMachine0.checkNever(stateNode => false), None)
+    t.checkExpect(
+      stateMachine0.checkNever(state => state.hasLabel("bigAveYellow")
+        && state.hasLabel("smallStYellow")), None)
+
+    val street0A = stateMachine0.
+      checkNever(state => state.hasLabel("bigAveRed") &&
+        state.hasLabel("smallStYellow"))
+    t.checkExpect(street0A.get.getContents().labels,
+      List("bigAveRed", "smallStYellow"))
+
+    val  street0B = stateMachine0.
+      checkNever(state => state.hasLabel("bigAveGreen") ||
+        state.hasLabel("smallStGreen"))
+    t.checkExpect(street0B.get.getContents().labels,
+      List("bigAveRed", "smallStGreen"))
+
+    //index 5
+    val graph5 = new AdjacencyListGraph[StateData]
+    val stateMachine5 = new StateMachine(graph5)
+    stateMachine5.initFromCSV("data/street-light-nodes.csv",
+      "data/street-light-edges.csv","5")
+
+    val street5A =
+      stateMachine5.checkNever(state => state.hasLabel("bigAveGreen") &&
+        state.hasLabel("smallStGreen"))
+    t.checkExpect(street5A.get.getContents().labels,
+      List("bigAveGreen", "smallStGreen"))
+
+    val street5B =
+      stateMachine5.checkNever(state => state.hasLabel("bigAveRed") &&
+        state.hasLabel("smallStRed"))
+    t.checkExpect(street5B.get.getContents().labels,
+      List("bigAveRed", "smallStRed"))
+
+    val street5C =
+      stateMachine5.checkNever(state => state.hasLabel("bigAveGreen") ||
+        state.hasLabel("smallStGreen"))
+    t.checkExpect(street5C.get.getContents().labels,
+      List("bigAveGreen", "smallStGreen"))
+
+    //custom graph manually created that's a cycle
+    val cycleGraph = new AdjacencyListGraph[StateData]
+    val rock = cycleGraph.createNode(new StateData(List("rock","1")))
+    val paper = cycleGraph.createNode(new StateData(List("paper","1")))
+    val scissors = cycleGraph.createNode(new StateData(List("scissors","1")))
+    cycleGraph.addEdge(rock,scissors)
+    cycleGraph.addEdge(scissors,paper)
+    cycleGraph.addEdge(paper,rock)
+    val cycleStateMachine = new StateMachine(cycleGraph)
+    cycleStateMachine.setStart(rock)
+
+    t.checkExpect(
+      cycleStateMachine.checkNever(state => state.hasLabel("scissors")),
+      Some(scissors))
+
+    //football one based on csv file,index 0
+    val footballGraph = new AdjacencyListGraph[StateData]
+    val footballMachine = new StateMachine(footballGraph)
+    footballMachine.initFromCSV("data/football-nodes.csv",
+      "data/football-edges.csv","0")
+    t.checkExpect(footballMachine.checkNever(stateNode => false),None)
+
+    t.checkExpect(
+      footballMachine.checkNever(state => state.hasLabel("goalkeeper") ||
+        state.hasLabel("striker")).get.getContents().labels,
+      List("0","goalkeeper","saves"))
+
+    t.checkExpect(
+      footballMachine.checkNever(state => state.hasLabel("midfielder") &&
+        state.hasLabel("defender")),
+      None)
+
+    //football one based on csv file,index 1
+    val footballGraph1 = new AdjacencyListGraph[StateData]
+    val footballMachine1 = new StateMachine(footballGraph)
+    footballMachine1.initFromCSV("data/football-nodes.csv",
+      "data/football-edges.csv","1")
+    t.checkExpect(footballMachine1.checkNever(stateNode => false),None)
+
+    t.checkExpect(
+      footballMachine1.checkNever(state => state.hasLabel("goalkeeper") ||
+        state.hasLabel("striker")).get.getContents().labels,
+      List("3", "striker", "goals"))
+
+    t.checkExpect(
+      footballMachine1.checkNever(state => state.hasLabel("striker") &&
+        state.hasLabel("defender")),None)
+
+    //football one based on csv file,index 2
+    val footballGraph2 = new AdjacencyListGraph[StateData]
+    val footballMachine2 = new StateMachine(footballGraph2)
+    footballMachine2.initFromCSV("data/football-nodes.csv",
+      "data/football-edges.csv","2")
+    t.checkExpect(footballMachine2.
+      checkNever(stateNode => true).get.getContents().labels
+      ,List("2", "midfielder", "passes"))
+
+    t.checkExpect(
+      footballMachine2.checkNever(state => state.hasLabel("goalkeeper") ||
+        state.hasLabel("striker")).get.getContents().labels,
+      List("3","striker","goals"))
+
+    t.checkExpect(
+      footballMachine2.checkNever(state => state.hasLabel("midfielder") &&
+        state.hasLabel("striker")), None)
+
+
+    //rock paper scissors one based on csv file, index 0
+    val graphRPC = new AdjacencyListGraph[StateData]
+    val machineRPC = new StateMachine(graphRPC)
+    machineRPC.initFromCSV("data/rock-paper-scissors-nodes.csv",
+      "data/rock-paper-scissors-edges.csv","0")
+    t.checkExpect(machineRPC.checkNever(stateNode => false),None)
+
+    //rock paper scissors one based on csv file, index 1
+    val graphRPC1 = new AdjacencyListGraph[StateData]
+    val machineRPC1 = new StateMachine(graphRPC1)
+    machineRPC1.initFromCSV("data/rock-paper-scissors-nodes.csv",
+      "data/rock-paper-scissors-edges.csv","1")
+    t.checkExpect(machineRPC1.checkNever(stateNode => false),None)
+    t.checkExpect(
+      machineRPC1.checkNever(state => state.hasLabel("scissors") &&
+        state.hasLabel("paper")),
+      None)
+
+    //rock paper scissors one based on csv file, index 2
+    val graphRPC2 = new AdjacencyListGraph[StateData]
+    val machineRPC2 = new StateMachine(graphRPC2)
+    machineRPC2.initFromCSV("data/rock-paper-scissors-nodes.csv",
+      "data/rock-paper-scissors-edges.csv","2")
+    t.checkExpect(machineRPC2.checkNever(stateNode => false),None)
+
+    t.checkExpect(
+      machineRPC2.checkNever(state => state.hasLabel("scissors") ||
+        state.hasLabel("paper")).get.getContents().labels,
+      List("2", "paper", "openHand"))
+
+    t.checkExpect(
+      machineRPC2.checkNever(state => state.hasLabel("scissors") &&
+        state.hasLabel("paper")),
+      None)
+
+
+    //singular based on csv file, only one index
+    val aloneGraph = new AdjacencyListGraph[StateData]
+    val aloneMachine = new StateMachine(aloneGraph)
+    aloneMachine.initFromCSV("data/singular-nodes.csv",
+      "data/singular-edges.csv","0")
+    t.checkExpect(aloneMachine.checkNever(stateNode => false),None)
+
+
+  }
+
+
+
+
+
+
+
+
+
+  /**
+   * Test method that tests hasLabel method in StateData class
+   * @param t
+   */
+  def testHasLabelStateData(t : Tester ): Unit = {
+    val bestPlayers = List("curry", "harden", "lebron", "giannis", "jokic")
+    val playerStateData = new StateData(bestPlayers)
+    t.checkExpect(playerStateData.hasLabel("curry"), true)
+    t.checkExpect(playerStateData.hasLabel("messi"), false)
+
+    val empty = new StateData(List())
+    t.checkExpect(empty.hasLabel("lebron"), false)
+
+  }
+
+
+}
+
+object SearchTest extends App {
+  Tester.run(new ModelCheckingTestSuite)
+}
+
+
+
